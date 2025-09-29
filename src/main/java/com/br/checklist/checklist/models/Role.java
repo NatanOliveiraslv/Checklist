@@ -7,6 +7,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
+import java.util.UUID;
 
 @Entity
 @Table(name = "roles")
@@ -17,8 +18,9 @@ import java.time.Instant;
 @EqualsAndHashCode(of = "id")
 public class Role {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Integer id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(nullable = false, unique = true)
+    private UUID id;
 
     @Enumerated(EnumType.STRING)
     @Column(unique = true, nullable = false)
