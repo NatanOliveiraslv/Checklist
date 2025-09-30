@@ -2,7 +2,7 @@ package com.br.checklist.checklist.bootstrap;
 
 import com.br.checklist.checklist.enums.RoleEnum;
 import com.br.checklist.checklist.models.Role;
-import com.br.checklist.checklist.repository.RoleRepository;
+import com.br.checklist.checklist.repositories.RoleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;

@@ -1,4 +1,4 @@
-package com.br.checklist.checklist.repository;
+package com.br.checklist.checklist.repositories;
 
 import com.br.checklist.checklist.models.User;
 import org.springframework.data.jpa.repository.JpaRepository;

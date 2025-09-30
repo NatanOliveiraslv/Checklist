@@ -11,3 +11,20 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+
+cors:
+  allowedOrigin: http://localhost:3000
+
+api:
+  security:
+    token:
+      secret: ${JWT_SECRET:123}
+      expiration: ${JWT_EXPIRATION:1800} #30 min #in seconds
+      refresh-expiration: ${JWT_REFRESH:604800} #7 days #in seconds
+      issuer: api_checklist.com.br
+
+logging:
+  level:
+    org:
+    springframework:
+      security: DEBUG
