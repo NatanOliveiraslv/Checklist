@@ -16,9 +16,7 @@ public class AdminController {
 
     @PostMapping
     @PreAuthorize("hasRole('OWNER')")
-    public ResponseEntity<User> createAdministrator(@RequestBody RegisterUserDto registerUserDto) {
-        User createdAdmin = userService.createAdministrator(registerUserDto);
-
-        return ResponseEntity.ok(createdAdmin);
+    public ResponseEntity<String> createAdministrator(@RequestBody RegisterUserDto registerUserDto) {
+        return ResponseEntity.ok("beleza");
     }
 }

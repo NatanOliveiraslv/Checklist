@@ -1,18 +1,21 @@
 package com.br.checklist.checklist.services;
 
+import com.br.checklist.checklist.dto.user.AuthenticationRequestDTO;
+import com.br.checklist.checklist.dto.user.AuthenticationResponseDTO;
 import com.br.checklist.checklist.dto.user.RegisterUserDto;
-import com.br.checklist.checklist.enums.RoleEnum;
-import com.br.checklist.checklist.models.Role;
+import com.br.checklist.checklist.dto.user.UserResponseDTO;
+import com.br.checklist.checklist.exceptions.UnauthorizedUser;
+import com.br.checklist.checklist.exceptions.UserAlreadyRegistered;
+import com.br.checklist.checklist.infra.security.SecurityConfiguration;
+import com.br.checklist.checklist.infra.security.TokenService;
 import com.br.checklist.checklist.models.User;
-import com.br.checklist.checklist.repositories.RoleRepository;
 import com.br.checklist.checklist.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Optional;
 
 @Service
 public class UserService {
@@ -20,31 +23,52 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
     @Autowired
-    private RoleRepository roleRepository;
+    private AuthenticationManager authenticationManager;
     @Autowired
-    private PasswordEncoder passwordEncoder;
+    private TokenService tokenService;
+    @Autowired
+    private SecurityConfiguration securityConfiguration;
 
-    public List<User> allUsers() {
-        List<User> users = new ArrayList<>();
 
-        userRepository.findAll().forEach(users::add);
+    public UserResponseDTO createUser(RegisterUserDto data) {
+        if (userRepository.existsByUsername(data.userName()) || userRepository.existsByEmail(data.email())) {
+            throw new UserAlreadyRegistered();// Retorna erro 400 se login ou e-mail já existir
+        }
+        var userEntity = new User(data);
+        userEntity.setPassword(securityConfiguration.passwordEncoder().encode(data.password()));
+        userRepository.save(userEntity);
 
-        return users;
+        return new UserResponseDTO(userEntity);
     }
 
-    public User createAdministrator(RegisterUserDto input) {
-        Optional<Role> optionalRole = roleRepository.findByName(RoleEnum.ADMIN);
+    public AuthenticationResponseDTO authenticate(final AuthenticationRequestDTO data) {
 
-        if (optionalRole.isEmpty()) {
-            return null;
-        }
+        // Authenticate the user
+        var token = new UsernamePasswordAuthenticationToken(data.username(), data.password());
+        var authentication = authenticationManager.authenticate(token);
 
-        var user = new User();
-        user.setFirstName(input.firstName());
-        user.setEmail(input.email());
-        user.setPassword(passwordEncoder.encode(input.password()));
-        user.setRole(optionalRole.get());
+        // Generate JWT access token
+        String accessToken = tokenService.generateToken(((User) authentication.getPrincipal()).getUsername());
 
-        return userRepository.save(user);
+        // Fetch user and create refresh token
+        User user = userRepository.findByUsername(data.username()).orElseThrow(() -> new UnauthorizedUser("Usário não autorizado"));
+
+        String refreshToken = tokenService.generateRefreshToken(user.getUsername());
+
+        return new AuthenticationResponseDTO(accessToken, refreshToken);
+    }
+
+    public AuthenticationResponseDTO refreshToken(String refreshToken) {
+        String subject = tokenService.getSubject(refreshToken); // Valida o token JWT
+        final var newAccessToken = tokenService.generateToken(subject);
+        return new AuthenticationResponseDTO(newAccessToken, refreshToken);
+    }
+
+    public Page<UserResponseDTO> listUsers(Pageable pageable, User user) {
+        return userRepository.findAll(pageable).map(UserResponseDTO::new);
+    }
+
+    public UserResponseDTO getCurrentUser(User user) {
+        return new UserResponseDTO(user);
     }
 }

@@ -1,5 +1,6 @@
 package com.br.checklist.checklist.models;
 
+import com.br.checklist.checklist.dto.user.RegisterUserDto;
 import com.br.checklist.checklist.enums.Provider;
 import jakarta.persistence.*;
 import lombok.*;
@@ -61,6 +62,24 @@ public class User implements UserDetails {
     @ManyToOne(cascade = CascadeType.REMOVE)
     @JoinColumn(name = "role_id", referencedColumnName = "id", nullable = false)
     private Role role;
+
+    public User(RegisterUserDto data) {
+        this.username = data.userName();
+        this.firstName = data.firstName();
+        this.lastName = data.lastName();
+        this.email = data.email();
+        this.provider = Provider.LOCAL;
+    }
+
+    public User(String username, String email, String firstName, String lastName, Provider provider, String providerId) {
+        this.email = email;
+        this.username = username;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.provider = provider;
+        this.providerId = providerId;
+        this.password = UUID.randomUUID().toString(); // Senha aleatória para usuários OAuth2
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
